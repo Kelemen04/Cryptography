@@ -54,7 +54,17 @@ def encrypt_vigenere(plaintext, keyword):
 
     Add more implementation details here.
     """
-    raise NotImplementedError  # Your implementation here
+    if len(plaintext) != len(keyword):
+        keyword = (keyword * len(plaintext))[:len(plaintext)]
+
+    output = ''
+    i = 0
+    for char in plaintext:
+        output += chr(int((ord(char) - 65 + ord(keyword[i]) - 65) % 26 + 65))
+
+        i += 1
+
+    return output  # Your implementation here
 
 
 def decrypt_vigenere(ciphertext, keyword):
