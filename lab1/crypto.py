@@ -55,12 +55,15 @@ def encrypt_vigenere(plaintext, keyword):
     Add more implementation details here.
     """
     if len(plaintext) != len(keyword):
-        keyword = (keyword * len(plaintext))[:len(plaintext)]
+        keyword = (keyword * ((len(plaintext) // len(keyword)) + 1))[:len(plaintext)]
 
     output = ''
     i = 0
     for char in plaintext:
-        output += chr(int((ord(char) - 65 + ord(keyword[i]) - 65) % 26 + 65))
+        if char.isalpha():
+            output += chr(int((ord(char) - 65 + (ord(keyword[i]) - 65)) % 26 + 65))
+        else:
+            output += char
 
         i += 1
 
@@ -72,7 +75,20 @@ def decrypt_vigenere(ciphertext, keyword):
 
     Add more implementation details here.
     """
-    raise NotImplementedError  # Your implementation here
+    if len(ciphertext) != len(keyword):
+        keyword = (keyword * ((len(ciphertext) // len(keyword)) + 1))[:len(ciphertext)]
+
+    output = ''
+    i = 0
+    for char in ciphertext:
+        if char.isalpha():
+            output += chr(int((ord(char) - 65 - (ord(keyword[i]) - 65)) % 26 + 65))
+        else:
+            output += char
+
+        i += 1
+
+    return output  # Your implementation here
 
 
 # Merkle-Hellman Knapsack Cryptosystem
