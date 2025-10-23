@@ -4,8 +4,8 @@ File: crypto.py
 ---------------
 Assignment 1: Cryptography
 Course: CS 41
-Name: <YOUR NAME>
-SUNet: <SUNet ID>
+Name: Kelemen Szilard
+SUNet: ksim2360
 
 Replace this with a description of the program.
 """
@@ -20,12 +20,16 @@ def encrypt_caesar(plaintext):
     """
     key = 3
 
+    ascii = ''.join(chr(i) for i in range(256))
     output = ''
-    for char in plaintext:
+    for i in range(0, len(plaintext)):
+        output += ascii[(ascii.find(plaintext[i]) + key) % len(ascii)]
+
+    """for char in plaintext:
         if char.isalpha():
             output += chr(int((ord(char) - 65 + key) % 26 + 65))
         else:
-            output += char
+            output += char"""
 
     return output  # Your implementation here
 
@@ -37,12 +41,16 @@ def decrypt_caesar(ciphertext):
     """
     key = 3
 
+    ascii = ''.join(chr(i) for i in range(256))
     output = ''
-    for char in ciphertext:
+    for i in range(0, len(ciphertext)):
+        output += ascii[(ascii.find(ciphertext[i]) - key) % len(ascii)]
+
+    """for char in plaintext:
         if char.isalpha():
-            output += chr(int((ord(char) - 65 - key) % 26 + 65))
+            output += chr(int((ord(char) - 65 + key) % 26 + 65))
         else:
-            output += char
+            output += char"""
 
     return output  # Your implementation here
 
@@ -172,3 +180,123 @@ def decrypt_mh(message, private_key):
     """
     raise NotImplementedError  # Your implementation here
 
+
+def encrypt_scytale(plaintext, circumference):
+    while len(plaintext) % circumference != 0:
+        plaintext += '.'
+
+    matrix = [[] for _ in range(circumference)]
+    cols = len(plaintext) // circumference
+
+    index = 0
+    for j in range(cols):
+        for i in range(circumference):
+            matrix[i].append(plaintext[index])
+            index += 1
+
+    ciphertext = ''.join(''.join(row) for row in matrix)
+    return ciphertext
+
+def decrypt_scytale(ciphertext, circumference):
+    matrix = [[] for _ in range(circumference)]
+
+    cols = len(ciphertext) // circumference
+    index = 0
+
+    for i in range(circumference):
+        for j in  range(cols):
+            matrix[i].append(ciphertext[index])
+            index += 1
+
+    output = ''
+    for i in range(cols):
+        for j in range(circumference):
+            output += matrix[j][i]
+
+    return output
+
+def encrypt_railfence(plaintext, circumference):
+    while len(plaintext) % circumference != 0:
+        plaintext += '.'
+
+    matrix = [[] for _ in range(circumference)]
+
+    index = 0
+    way = 1
+    for j in range(len(plaintext)):
+        matrix[index].append(plaintext[j])
+
+        if index == 0:
+            way = 1
+
+        if index == (circumference - 1):
+            way = -1
+
+        index += way
+
+    ciphertext = ''.join(''.join(row) for row in matrix)
+    ciphertext = ciphertext.replace('.','')
+
+    return ciphertext
+
+def decrypt_railfence(ciphertext, circumference):
+    matrix = [['' for _ in range(len(ciphertext))] for _ in range(circumference)]
+
+    index = 0
+    way = 1
+    for j in range(len(ciphertext)):
+        matrix[index].append('*')
+
+        if index == 0:
+            way = 1
+
+        if index == (circumference - 1):
+            way = -1
+
+        index += way
+
+    index = 0
+    way = 1
+    for i in range(circumference):
+        for j in range(len(ciphertext)):
+            if matrix[i][j] == '*' and index < len(ciphertext):
+                matrix[i][j] = ciphertext[index]
+                index += 1
+
+    output = ''
+    index  = 0
+    for i in range(len(ciphertext)):
+        output += matrix[index][i]
+
+        if index == 0:
+            way = 1
+
+        if index == (circumference - 1):
+            way = -1
+
+        index += way
+
+    return output
+
+
+def encrypt_caesar_binary(data):
+    key = 3
+
+    encrypted_bytes = []
+
+    for byte in data:
+        encrypted = (byte + key) % 256
+        encrypted_bytes.append(encrypted)
+
+    return bytes(encrypted_bytes)
+
+def decrypt_caesar_binary(data):
+    key = 3
+
+    decrypted_bytes = []
+
+    for byte in data:
+        decrypted = (byte - key) % 256
+        decrypted_bytes.append(decrypted)
+
+    return bytes(decrypted_bytes)

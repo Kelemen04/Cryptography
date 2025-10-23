@@ -12,7 +12,8 @@ import random
 from crypto import (encrypt_caesar, decrypt_caesar,
                     encrypt_vigenere, decrypt_vigenere,
                     generate_private_key, create_public_key,
-                    encrypt_mh, decrypt_mh)
+                    encrypt_mh, decrypt_mh, encrypt_scytale, decrypt_scytale,
+                    encrypt_railfence, decrypt_railfence, decrypt_caesar_binary, encrypt_caesar_binary)
 
 
 #############################
@@ -21,8 +22,7 @@ from crypto import (encrypt_caesar, decrypt_caesar,
 
 def get_tool():
     print("* Tool *")
-    return _get_selection("(C)aesar, (V)igenere or (M)erkle-Hellman? ", "CVM")
-
+    return _get_selection("(C)aesar, (V)igenere, (M)erkle-Hellman, (R)ailfence, (S)cytale? or (B)yteCaesar", "CVMRSB")
 
 def get_action():
     """Return true iff encrypt"""
@@ -160,6 +160,77 @@ def run_merkle_hellman():
 
     set_output(output)
 
+def run_scytale():
+    action = get_action()
+    encrypting = action == 'E'
+    data = get_input(binary=False)
+
+    print("* Transform *")
+    circumference = int(input("Circumference? "))
+
+    print(
+        "{}crypting using Scytale cipher with circumference {}...".format('En' if encrypting else 'De', circumference))
+
+    output = (encrypt_scytale if encrypting else decrypt_scytale)(data, circumference)
+    set_output(output)
+
+def run_railfence():
+    action = get_action()
+    encrypting = action == 'E'
+    data = get_input(binary=False)
+
+    print("* Transform *")
+    num_rails = int(input("Number of rails? "))
+
+    print("{}crypting using Railfence cipher with {} rails...".format('En' if encrypting else 'De', num_rails))
+
+    output = (encrypt_railfence if encrypting else decrypt_railfence)(data, num_rails)
+    set_output(output)
+
+def run_caesar_byte():
+
+    action = get_action()
+    encrypting = action == 'E'
+
+    print("* Input *")
+    filename = get_filename()
+
+    try:
+        with open(filename, 'rb') as f:
+            data = f.read()
+
+        if not data:
+            print("File is empty!")
+            return
+
+        print(f"Read {len(data)} bytes from {filename}")
+        print("* Transform *")
+        key=3
+
+        print("{}crypting binary data using Caesar cipher with key {}...".format('En' if encrypting else 'De', key))
+        output_data = (encrypt_caesar_binary if encrypting else decrypt_caesar_binary)(data)
+        # Set output
+
+        print("* Output *")
+        output_choice = _get_selection("(F)ile or (S)tring? ", "FS")
+
+        if output_choice == 'S':
+            try:
+                output_text = output_data.decode('utf-8', errors='replace')
+                print(f"Decoded output (may contain replacement characters):{output_text}")
+            except:
+                print(f"Binary output (hex representation):{output_data.hex()}")
+        else:
+            output_filename = get_filename()
+
+            with open(output_filename, 'wb') as f:
+                f.write(output_data)
+
+            print(f"Written {len(output_data)} bytes to {output_filename}")
+    except FileNotFoundError:
+        print(f"Error: File {filename} not found!")
+    except Exception as e:
+        print(f"Error: {str(e)}")
 
 def run_suite():
     """
@@ -175,7 +246,10 @@ def run_suite():
     commands = {
         'C': run_caesar,         # Caesar Cipher
         'V': run_vigenere,       # Vigenere Cipher
-        'M': run_merkle_hellman  # Merkle-Hellman Knapsack Cryptosystem
+        'M': run_merkle_hellman,  # Merkle-Hellman Knapsack Cryptosystem
+        'R': run_railfence,  # Railfence Cipher
+        'S': run_scytale,  # Scytale Cipher
+        'B': run_caesar_byte
     }
     commands[tool]()
 
