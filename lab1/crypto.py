@@ -128,6 +128,182 @@ def decrypt_vigenere(ciphertext, keyword):
 
     return output  # Your implementation here
 
+def encrypt_scytale(plaintext, circumference):
+    if not isinstance(plaintext, str):
+        raise TypeError("Text must be str")
+    if not isinstance(circumference, int):
+        raise TypeError("Circumference must be int")
+
+    if not plaintext:
+        raise ValueError("Text cannot be empty")
+    if circumference <= 0:
+        raise ValueError("Circumference must be positive")
+
+    while len(plaintext) % circumference != 0:
+        plaintext += '~'
+
+    matrix = [[] for _ in range(circumference)]
+    cols = len(plaintext) // circumference
+
+    index = 0
+    for j in range(cols):
+        for i in range(circumference):
+            matrix[i].append(plaintext[index])
+            index += 1
+
+    ciphertext = ''.join(''.join(row) for row in matrix)
+    return ciphertext
+
+def decrypt_scytale(ciphertext, circumference):
+    if not isinstance(ciphertext, str):
+        raise TypeError("Text must be str")
+    if not isinstance(circumference, int):
+        raise TypeError("Circumference must be int")
+
+    if not ciphertext:
+        raise ValueError("Text cannot be empty")
+    if circumference <= 0:
+        raise ValueError("Circumference must be positive")
+
+    while len(ciphertext) % circumference != 0:
+        ciphertext += "~"
+
+    matrix = [[] for _ in range(circumference)]
+
+    cols = len(ciphertext) // circumference
+    index = 0
+
+    for i in range(circumference):
+        for j in  range(cols):
+            matrix[i].append(ciphertext[index])
+            index += 1
+
+    output = ''
+    for i in range(cols):
+        for j in range(circumference):
+            output += matrix[j][i]
+
+    return output.replace('~','');
+
+def encrypt_railfence(plaintext, num_rails):
+    if not isinstance(plaintext, str):
+        raise TypeError("Text must be str")
+    if not isinstance(num_rails, int):
+        raise TypeError("Num_rails must be int")
+
+    if not plaintext:
+        raise ValueError("Text cannot be empty")
+    if num_rails <= 0:
+        raise ValueError("Num_rails must be positive")
+
+    while len(plaintext) % num_rails != 0:
+        plaintext += '~'
+
+    matrix = [[] for _ in range(num_rails)]
+
+    index = 0
+    way = 1
+    for j in range(len(plaintext)):
+        matrix[index].append(plaintext[j])
+
+        if index == 0:
+            way = 1
+
+        if index == (num_rails - 1):
+            way = -1
+
+        index += way
+
+    ciphertext = ''.join(''.join(row) for row in matrix)
+
+    return ciphertext
+
+def decrypt_railfence(ciphertext, num_rails):
+    if not isinstance(ciphertext, str):
+        raise TypeError("Text must be str")
+    if not isinstance(num_rails, int):
+        raise TypeError("Num_rails must be int")
+
+    if not ciphertext:
+        raise ValueError("Text cannot be empty")
+    if num_rails <= 0:
+        raise ValueError("Num_rails must be positive")
+
+    matrix = [['' for _ in range(len(ciphertext))] for _ in range(num_rails)]
+
+    while len(ciphertext) % num_rails != 0:
+        ciphertext += '~'
+
+    index = 0
+    way = 1
+    for j in range(len(ciphertext)):
+        matrix[index][j] = '*'
+
+        if index == 0:
+            way = 1
+
+        if index == (num_rails - 1):
+            way = -1
+
+        index += way
+
+    index = 0
+    way = 1
+    for i in range(num_rails):
+        for j in range(len(ciphertext)):
+            if matrix[i][j] == '*' and index < len(ciphertext):
+                matrix[i][j] = ciphertext[index]
+                index += 1
+
+    output = ''
+    index  = 0
+    for i in range(len(ciphertext)):
+        output += matrix[index][i]
+
+        if index == 0:
+            way = 1
+
+        if index == (num_rails - 1):
+            way = -1
+
+        index += way
+
+    output = output.replace('~', '')
+
+    return output
+
+def encrypt_caesar_binary(data):
+    key = 3
+
+    if not isinstance(data, (bytes, bytearray)):
+        raise TypeError("Data must be byte or bytearray")
+    if len(data) == 0:
+        raise ValueError("Data cannot be empty")
+
+    encrypted_bytes = []
+
+    for byte in data:
+        encrypted = (byte + key) % 256
+        encrypted_bytes.append(encrypted)
+
+    return bytes(encrypted_bytes)
+
+def decrypt_caesar_binary(data):
+    key = 3
+
+    if not isinstance(data, (bytes, bytearray)):
+        raise TypeError("Data must be byte or bytearray")
+    if len(data) == 0:
+        raise ValueError("Data cannot be empty")
+
+    decrypted_bytes = []
+
+    for byte in data:
+        decrypted = (byte - key) % 256
+        decrypted_bytes.append(decrypted)
+
+    return bytes(decrypted_bytes)
+
 
 # Merkle-Hellman Knapsack Cryptosystem
 
@@ -209,174 +385,3 @@ def decrypt_mh(message, private_key):
     @return bytearray or str of decrypted characters
     """
     raise NotImplementedError  # Your implementation here
-
-
-def encrypt_scytale(plaintext, circumference):
-    if not isinstance(plaintext, str):
-        raise TypeError("Text must be str")
-    if not isinstance(circumference, int):
-        raise TypeError("Circumference must be int")
-
-    if not plaintext:
-        raise ValueError("Text cannot be empty")
-    if circumference <= 0:
-        raise ValueError("Circumference must be positive")
-
-    while len(plaintext) % circumference != 0:
-        plaintext += '.'
-
-    matrix = [[] for _ in range(circumference)]
-    cols = len(plaintext) // circumference
-
-    index = 0
-    for j in range(cols):
-        for i in range(circumference):
-            matrix[i].append(plaintext[index])
-            index += 1
-
-    ciphertext = ''.join(''.join(row) for row in matrix)
-    return ciphertext
-
-def decrypt_scytale(ciphertext, circumference):
-    if not isinstance(ciphertext, str):
-        raise TypeError("Text must be str")
-    if not isinstance(circumference, int):
-        raise TypeError("Circumference must be int")
-
-    if not ciphertext:
-        raise ValueError("Text cannot be empty")
-    if circumference <= 0:
-        raise ValueError("Circumference must be positive")
-
-    matrix = [[] for _ in range(circumference)]
-
-    cols = len(ciphertext) // circumference
-    index = 0
-
-    for i in range(circumference):
-        for j in  range(cols):
-            matrix[i].append(ciphertext[index])
-            index += 1
-
-    output = ''
-    for i in range(cols):
-        for j in range(circumference):
-            output += matrix[j][i]
-
-    return output
-
-def encrypt_railfence(plaintext, circumference):
-    if not isinstance(plaintext, str):
-        raise TypeError("Text must be str")
-    if not isinstance(circumference, int):
-        raise TypeError("Circumference must be int")
-
-    if not plaintext:
-        raise ValueError("Text cannot be empty")
-    if circumference <= 0:
-        raise ValueError("Circumference must be positive")
-
-    while len(plaintext) % circumference != 0:
-        plaintext += '.'
-
-    matrix = [[] for _ in range(circumference)]
-
-    index = 0
-    way = 1
-    for j in range(len(plaintext)):
-        matrix[index].append(plaintext[j])
-
-        if index == 0:
-            way = 1
-
-        if index == (circumference - 1):
-            way = -1
-
-        index += way
-
-    ciphertext = ''.join(''.join(row) for row in matrix)
-    ciphertext = ciphertext.replace('.','')
-
-    return ciphertext
-
-def decrypt_railfence(ciphertext, circumference):
-    if not isinstance(ciphertext, str):
-        raise TypeError("Text must be str")
-    if not isinstance(circumference, int):
-        raise TypeError("Circumference must be int")
-
-    if not ciphertext:
-        raise ValueError("Text cannot be empty")
-    if circumference <= 0:
-        raise ValueError("Circumference must be positive")
-
-    matrix = [['' for _ in range(len(ciphertext))] for _ in range(circumference)]
-
-    index = 0
-    way = 1
-    for j in range(len(ciphertext)):
-        matrix[index].append('*')
-
-        if index == 0:
-            way = 1
-
-        if index == (circumference - 1):
-            way = -1
-
-        index += way
-
-    index = 0
-    way = 1
-    for i in range(circumference):
-        for j in range(len(ciphertext)):
-            if matrix[i][j] == '*' and index < len(ciphertext):
-                matrix[i][j] = ciphertext[index]
-                index += 1
-
-    output = ''
-    index  = 0
-    for i in range(len(ciphertext)):
-        output += matrix[index][i]
-
-        if index == 0:
-            way = 1
-
-        if index == (circumference - 1):
-            way = -1
-
-        index += way
-
-    return output
-
-
-def encrypt_caesar_binary(data):
-    key = 3
-
-    if not isinstance(data, (bytes, bytearray)):
-        raise TypeError("Data must be byte or bytearray")
-    if len(data) == 0:
-        raise ValueError("Data cannot be empty")
-
-    encrypted_bytes = []
-
-    for byte in data:
-        encrypted = (byte + key) % 256
-        encrypted_bytes.append(encrypted)
-
-    return bytes(encrypted_bytes)
-
-def decrypt_caesar_binary(data):
-    key = 3
-
-    if not isinstance(data, (bytes, bytearray)):
-        raise TypeError("Data must be byte or bytearray")
-    if len(data) == 0:
-        raise ValueError("Data cannot be empty")
-
-    decrypted_bytes = []
-
-    for byte in data:
-        decrypted = (byte - key) % 256
-        decrypted_bytes.append(decrypted)
-
-    return bytes(decrypted_bytes)

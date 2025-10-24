@@ -22,7 +22,7 @@ from crypto import (encrypt_caesar, decrypt_caesar,
 
 def get_tool():
     print("* Tool *")
-    return _get_selection("(C)aesar, (V)igenere, (M)erkle-Hellman, (R)ailfence, (S)cytale? or (B)yteCaesar", "CVMRSB")
+    return _get_selection("(C)aesar, (V)igenere, (M)erkle-Hellman, (R)ailfence, (S)cytale? or (B)yteCaesar : ", "CVMRSB")
 
 def get_action():
     """Return true iff encrypt"""
