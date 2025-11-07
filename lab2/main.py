@@ -1,6 +1,7 @@
 import json
 import binascii
 import re
+from Crypto.Cipher import AES
 
 HEX_RE = re.compile(r'^[0-9a-fA-F]+$')
 
@@ -111,6 +112,39 @@ def slicing(plaintext,block_size):
     return blocks
 
 
+def encrypt_vigenere(plaintext, key):
+    ciphertext = bytearray()
+
+    for i in range(len(plaintext)):
+        ciphertext.append((plaintext[i] +  key[i]) % 256)
+
+    return bytes(ciphertext)
+
+
+def decrypt_vigenere(ciphertext, key):
+    plaintext = bytearray()
+
+    for i in range(len(ciphertext)):
+        plaintext.append((ciphertext[i] - key[i]) % 256)
+
+    return bytes(plaintext)
+
+def ecb_encrypt(blocks, prepared):
+    encrypted_blocks = []
+
+    for block in blocks:
+        if prepared["algorithm"].upper() == "VIGENERE":
+            encrypted = encrypt_vigenere(block, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            encrypted = cipher.encrypt(block)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        encrypted_blocks.append(encrypted)
+
+    return b''.join(encrypted_blocks)
+
 if __name__ == "__main__":
 
     data = load_data("data.json")
@@ -122,3 +156,14 @@ if __name__ == "__main__":
 
     blocks = slicing(plaintext_padding,prepared["block_size_bytes"])
 
+    match data["mode"]:
+        case "ECB":
+            ecb_encrypt(blocks, prepared)
+        case "CBC":
+            cbc_encrypt(blocks, prepared)
+        case "CFB":
+            cfb_encrypt(blocks, prepared)
+        case "OFB":
+            ofb_encrypt(blocks, prepared)
+        case "CTR":
+            ctr_encrypt(blocks, prepared)
