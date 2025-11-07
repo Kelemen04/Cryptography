@@ -98,6 +98,18 @@ def padding(plaintext,type,bits):
 
     return plaintext
 
+def slicing(plaintext,block_size):
+    start = 0
+    end = block_size
+    blocks = []
+
+    while start < len(plaintext):
+        blocks.append(plaintext[start:end])
+        start = end
+        end += block_size
+
+    return blocks
+
 
 if __name__ == "__main__":
 
@@ -106,5 +118,7 @@ if __name__ == "__main__":
 
     plaintext = load_plaintext("input_file")
 
-    file = padding(plaintext, prepared["padding"], prepared["block_size_bits"])
+    plaintext_padding = padding(plaintext, prepared["padding"], prepared["block_size_bits"])
+
+    blocks = slicing(plaintext_padding,prepared["block_size_bytes"])
 
