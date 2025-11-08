@@ -145,6 +145,22 @@ def ecb_encrypt(blocks, prepared):
 
     return b''.join(encrypted_blocks)
 
+def ecb_decrypt(blocks, prepared):
+    decrypted_blocks = []
+
+    for block in blocks:
+        if prepared["algorithm"].upper() == "VIGENERE":
+            decrypted = decrypt_vigenere(block, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            decrypted = cipher.decrypt(block)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        decrypted_blocks.append(decrypted)
+
+    return b''.join(decrypted_blocks)
+
 def cbc_encrypt(blocks, prepared):
     encrypted_blocks = []
 
@@ -168,6 +184,27 @@ def cbc_encrypt(blocks, prepared):
 
     return b''.join(encrypted_blocks)
 
+def cbc_decrypt(blocks, prepared):
+    decrypted_blocks = []
+    prev = prepared["iv_bytes"]
+
+    for block in blocks:
+        if prepared["algorithm"].upper() == "VIGENERE":
+            decrypted = decrypt_vigenere(block, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            decrypted = cipher.decrypt(block)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        xor_block = bytearray(len(decrypted))
+        for i in range(len(decrypted)):
+            xor_block[i] = decrypted[i] ^ prev[i]
+
+        decrypted_blocks.append(bytes(xor_block))
+        prev = block
+
+    return b''.join(decrypted_blocks)
 
 def cfb_encrypt(blocks, prepared):
     encrypted_blocks = []
@@ -194,6 +231,31 @@ def cfb_encrypt(blocks, prepared):
 
     return b''.join(encrypted_blocks)
 
+def cfb_decrypt(blocks, prepared):
+    decrypted_blocks = []
+    prev = prepared["iv_bytes"]
+
+    for block in blocks:
+        if prepared["algorithm"].upper() == "VIGENERE":
+            cipher_block = encrypt_vigenere(prev, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            cipher_block = cipher.encrypt(prev)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        xor_block = bytearray(len(block))
+        for i in range(len(block)):
+            xor_block[i] = block[i] ^ cipher_block[i]
+
+        decrypted = bytes(xor_block)
+        decrypted_blocks.append(decrypted)
+
+        prev = block
+
+    return b''.join(decrypted_blocks)
+
+
 def ofb_encrypt(blocks, prepared):
     encrypted_blocks = []
 
@@ -219,26 +281,56 @@ def ofb_encrypt(blocks, prepared):
 
     return b''.join(encrypted_blocks)
 
+def ofb_decrypt(blocks, prepared):
+    return ofb_encrypt(blocks, prepared)
+
 
 if __name__ == "__main__":
 
     data = load_data("data.json")
     prepared = validate_and_prepare(data)
 
-    plaintext = load_plaintext("input_file")
+    text = "input_file.jpg"
+    plaintext = load_plaintext(text)
 
     plaintext_padding = padding(plaintext, prepared["padding"], prepared["block_size_bits"])
 
     blocks = slicing(plaintext_padding,prepared["block_size_bytes"])
 
-    match data["mode"]:
+    encrypted = None
+    match data["mode"].upper():
         case "ECB":
-            ecb_encrypt(blocks, prepared)
+            encrypted = ecb_encrypt(blocks, prepared)
         case "CBC":
-            cbc_encrypt(blocks, prepared)
+            encrypted = cbc_encrypt(blocks, prepared)
         case "CFB":
-            cfb_encrypt(blocks, prepared)
+            encrypted = cfb_encrypt(blocks, prepared)
         case "OFB":
-            ofb_encrypt(blocks, prepared)
-        case "CTR":
-            ctr_encrypt(blocks, prepared)
+            encrypted = ofb_encrypt(blocks, prepared)
+        #case "CTR":
+            #ctr_encrypt(blocks, prepared)
+        case _:
+            raise ValueError("Unsupported mode")
+
+    with open("encrypted_file", "wb") as f:
+        f.write(encrypted)
+
+    encrypted_blocks = slicing(encrypted, prepared["block_size_bytes"])
+
+    decrypted = None
+    match data["mode"].upper():
+        case "ECB":
+            decrypted = ecb_decrypt(encrypted_blocks, prepared)
+        case "CBC":
+            decrypted = cbc_decrypt(encrypted_blocks, prepared)
+        case "CFB":
+            decrypted = cfb_decrypt(encrypted_blocks, prepared)
+        case "OFB":
+            decrypted = ofb_decrypt(encrypted_blocks, prepared)
+        #case "CTR":
+        #   decrypted = ctr_encrypt(encrypted_blocks, prepared)
+        case _:
+            raise ValueError("Unsupported mode")
+
+    with open("decrypted_file", "wb") as f:
+        f.write(decrypted)

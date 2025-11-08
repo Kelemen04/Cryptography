@@ -2,7 +2,7 @@
   "block_size_bits": 128,
   "algorithm": "AES",
   "key": "00112233445566778899aabbccddeeff",
-  "mode": "CBC",
+  "mode": "ECB",
   "iv": "0102030405060708090a0b0c0d0e0f10",
   "padding": "SF"
 }
