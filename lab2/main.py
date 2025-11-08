@@ -145,6 +145,81 @@ def ecb_encrypt(blocks, prepared):
 
     return b''.join(encrypted_blocks)
 
+def cbc_encrypt(blocks, prepared):
+    encrypted_blocks = []
+
+    prev = prepared["iv_bytes"]
+
+    for block in blocks:
+        xor_block = bytearray(len(block))
+        for i in range(len(block)):
+            xor_block[i] = block[i] ^ prev[i]
+
+        if prepared["algorithm"].upper() == "VIGENERE":
+            encrypted = encrypt_vigenere(bytes(xor_block), prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            encrypted = cipher.encrypt(bytes(xor_block))
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        encrypted_blocks.append(encrypted)
+        prev = encrypted
+
+    return b''.join(encrypted_blocks)
+
+
+def cfb_encrypt(blocks, prepared):
+    encrypted_blocks = []
+
+    prev = prepared["iv_bytes"]
+
+    for block in blocks:
+        if prepared["algorithm"].upper() == "VIGENERE":
+            cipher_block = encrypt_vigenere(prev, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            cipher_block = cipher.encrypt(prev)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        xor_block = bytearray(len(block))
+        for i in range(len(block)):
+            xor_block[i] = block[i] ^ cipher_block[i]
+
+        encrypted = bytes(xor_block)
+        encrypted_blocks.append(encrypted)
+
+        prev = encrypted
+
+    return b''.join(encrypted_blocks)
+
+def ofb_encrypt(blocks, prepared):
+    encrypted_blocks = []
+
+    prev = prepared["iv_bytes"]
+
+    for block in blocks:
+        if prepared["algorithm"].upper() == "VIGENERE":
+            cipher_block = encrypt_vigenere(prev, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            cipher_block = cipher.encrypt(prev)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        prev = cipher_block
+
+        xor_block = bytearray(len(block))
+        for i in range(len(block)):
+            xor_block[i] = block[i] ^ cipher_block[i]
+
+        encrypted = bytes(xor_block)
+        encrypted_blocks.append(encrypted)
+
+    return b''.join(encrypted_blocks)
+
+
 if __name__ == "__main__":
 
     data = load_data("data.json")
