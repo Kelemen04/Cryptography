@@ -284,6 +284,34 @@ def ofb_encrypt(blocks, prepared):
 def ofb_decrypt(blocks, prepared):
     return ofb_encrypt(blocks, prepared)
 
+def ctr_encrypt(blocks, prepared):
+    encrypted_blocks = []
+    nonce = prepared["iv_bytes"]
+    block_size = prepared["block_size_bytes"]
+
+    for i, block in enumerate(blocks):
+        counter_block = int.from_bytes(nonce, byteorder='big') + i
+        counter_block_bytes = counter_block.to_bytes(block_size, byteorder='big')
+
+        if prepared["algorithm"].upper() == "VIGENERE":
+            cipher_block = encrypt_vigenere(counter_block_bytes, prepared["key_bytes"])
+        elif prepared["algorithm"].upper() == "AES":
+            cipher = AES.new(prepared["key_bytes"], AES.MODE_ECB)
+            cipher_block = cipher.encrypt(counter_block_bytes)
+        else:
+            raise ValueError("Unsupported algorithm")
+
+        xor_block = bytearray(len(block))
+        for j in range(len(block)):
+            xor_block[j] = block[j] ^ cipher_block[j]
+
+        encrypted_blocks.append(bytes(xor_block))
+
+    return b''.join(encrypted_blocks)
+
+
+def ctr_decrypt(blocks, prepared):
+    return ctr_encrypt(blocks, prepared)
 
 if __name__ == "__main__":
 
@@ -307,8 +335,8 @@ if __name__ == "__main__":
             encrypted = cfb_encrypt(blocks, prepared)
         case "OFB":
             encrypted = ofb_encrypt(blocks, prepared)
-        #case "CTR":
-            #ctr_encrypt(blocks, prepared)
+        case "CTR":
+            ctr_encrypt(blocks, prepared)
         case _:
             raise ValueError("Unsupported mode")
 
@@ -327,8 +355,8 @@ if __name__ == "__main__":
             decrypted = cfb_decrypt(encrypted_blocks, prepared)
         case "OFB":
             decrypted = ofb_decrypt(encrypted_blocks, prepared)
-        #case "CTR":
-        #   decrypted = ctr_encrypt(encrypted_blocks, prepared)
+        case "CTR":
+           decrypted = ctr_encrypt(encrypted_blocks, prepared)
         case _:
             raise ValueError("Unsupported mode")
 
