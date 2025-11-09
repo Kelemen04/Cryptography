@@ -78,26 +78,35 @@ def validate_and_prepare(data):
         "iv_bytes": iv,
     }
 
-def padding(plaintext,type,bits):
-
+def padding(plaintext, type, bits):
     block_size = bits // 8
+    pad_len = 0
 
     if type == "zero-padding":
-        while len(plaintext) % block_size != 0:
-            plaintext += b'\x00'
+        pad_len = (block_size - (len(plaintext) % block_size)) % block_size
+        plaintext += b'\x00' * pad_len
 
-    if type == "DES":
-        if len(plaintext) % block_size != 0:
+    elif type == "DES":
+        pad_len = block_size - (len(plaintext) % block_size)
+        if pad_len == block_size:
+            pad_len = 0
+        else:
+            pad_len2 = pad_len
             plaintext += b'\x80'
-            while len(plaintext) % block_size != 0:
-                plaintext += b'\x00'
+            pad_len2 -= 1
+            if pad_len > 0:
+                plaintext += b'\x00' * pad_len2
 
-    if type == "SF":
-        pad = block_size - (len(plaintext) % block_size)
-        while len(plaintext) % block_size != 0:
-            plaintext += bytes([pad])
+    elif type == "SF":
+        pad_len = block_size - (len(plaintext) % block_size)
+        plaintext += bytes([pad_len] * pad_len)
 
-    return plaintext
+    return plaintext, pad_len
+
+def unpadding(plaintext, pad_len):
+    if pad_len == 0:
+        return plaintext
+    return plaintext[:-pad_len]
 
 def slicing(plaintext,block_size):
     start = 0
@@ -110,7 +119,6 @@ def slicing(plaintext,block_size):
         end += block_size
 
     return blocks
-
 
 def encrypt_vigenere(plaintext, key):
     ciphertext = bytearray()
@@ -321,7 +329,8 @@ if __name__ == "__main__":
     text = "input_file.jpg"
     plaintext = load_plaintext(text)
 
-    plaintext_padding = padding(plaintext, prepared["padding"], prepared["block_size_bits"])
+    plaintext_padding,pad_len = padding(plaintext, prepared["padding"], prepared["block_size_bits"])
+    prepared["pad_len"] = pad_len
 
     blocks = slicing(plaintext_padding,prepared["block_size_bytes"])
 
@@ -336,7 +345,7 @@ if __name__ == "__main__":
         case "OFB":
             encrypted = ofb_encrypt(blocks, prepared)
         case "CTR":
-            ctr_encrypt(blocks, prepared)
+            encrypted = ctr_encrypt(blocks, prepared)
         case _:
             raise ValueError("Unsupported mode")
 
@@ -356,9 +365,11 @@ if __name__ == "__main__":
         case "OFB":
             decrypted = ofb_decrypt(encrypted_blocks, prepared)
         case "CTR":
-           decrypted = ctr_encrypt(encrypted_blocks, prepared)
+            decrypted = ctr_decrypt(encrypted_blocks, prepared)
         case _:
             raise ValueError("Unsupported mode")
+
+    decrypted = unpadding(decrypted, prepared["pad_len"])
 
     with open("decrypted_file", "wb") as f:
         f.write(decrypted)
