@@ -44,7 +44,18 @@ def handle_client(connectionSocket, addr):
             print(f"[SERVER] Successful registration. ID: {client_id}.")
 
             connectionSocket.sendall(b"Registration successful")
+        elif command == 'GETKEY':
+            if len(message_parts) < 2:
+                connectionSocket.sendall(b"Missing ID")
+                return
 
+            client_id = message_parts[1].decode()
+
+            with LOCK:
+                public_key = public_keys.get(client_id)
+
+            print(f"[SERVER] ID request: {client_id},sent key {public_key}")
+            connectionSocket.sendall(public_key)
         else:
             print(
                 f"[SERVER] Unknown command ({command}) from: {source}.")
