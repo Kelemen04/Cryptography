@@ -4,20 +4,9 @@ import sys
 
 SERVER_PORT = 8000
 SERVER_NAME = 'keyserver'
-serverSocket = socket(AF_INET, SOCK_STREAM)
-serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
 
 public_keys = {}
 LOCK = threading.Lock()
-
-try:
-    serverSocket.bind(('', SERVER_PORT))
-    serverSocket.listen(5)
-except Exception as e:
-    print(f"[SERVER] Error while connecting: {e}")
-    sys.exit(1)
-
-print(f"[SERVER] Server started on port: {SERVER_PORT}")
 
 def handle_client(connectionSocket, addr):
     source = f"{addr[0]}:{addr[1]}"
@@ -54,11 +43,14 @@ def handle_client(connectionSocket, addr):
             with LOCK:
                 public_key = public_keys.get(client_id)
 
-            print(f"[SERVER] ID request: {client_id},sent key {public_key}")
-            connectionSocket.sendall(public_key)
+            if public_key:
+                print(f"[SERVER] ID request: {client_id}, sent key.")
+                connectionSocket.sendall(public_key)
+            else:
+                print(f"[SERVER] ID request: {client_id}, key NOT FOUND.")
+                connectionSocket.sendall(b"KEY_NOT_FOUND")
         else:
-            print(
-                f"[SERVER] Unknown command ({command}) from: {source}.")
+            print(f"[SERVER] Unknown command ({command}) from: {source}.")
             connectionSocket.sendall(b"Unknown command")
 
     except Exception as e:
@@ -67,6 +59,17 @@ def handle_client(connectionSocket, addr):
         connectionSocket.close()
 
 def receive():
+    serverSocket = socket(AF_INET, SOCK_STREAM)
+    serverSocket.setsockopt(SOL_SOCKET, SO_REUSEADDR, 1)
+
+    try:
+        serverSocket.bind(('', SERVER_PORT))
+        serverSocket.listen(5)
+        print(f"[SERVER] Server started on port: {SERVER_PORT}")
+    except Exception as e:
+        print(f"[SERVER] Error while connecting: {e}")
+        sys.exit(1)
+
     while True:
         try:
             connectionSocket, addr = serverSocket.accept()
@@ -83,4 +86,5 @@ def receive():
 
     serverSocket.close()
 
-receive()
+if __name__ == "__main__":
+    receive()
